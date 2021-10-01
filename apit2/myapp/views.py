@@ -248,6 +248,11 @@ def playerInTeam(request,team_id):
             player_name = payload['name']
             player_age  = int(payload['age'])
             player_position = payload['position']
+            try:
+                payload['id']
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            except:
+                pass
 
             idstring = player_name + ":" + player_position
             this_id = b64encode(idstring.encode()).decode('utf-8')[0:22]
@@ -259,8 +264,8 @@ def playerInTeam(request,team_id):
             player = Player(id= this_id, team_id= team_id, name=player_name, age= int(player_age), position= player_position, 
             times_trained= 0, league=player_league, team=player_team, self_name=player_self)
             try:
-                Player.objects.get(pk = this_id)
-                return Response(status=status.HTTP_409_CONFLICT)
+                existingplayer = Player.objects.get(pk = this_id)
+                return Response(PlayerSerializer(existingplayer, many= False),status=status.HTTP_409_CONFLICT)
                 #jugador ya existe
             except:
                 player.save()
