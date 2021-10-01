@@ -245,9 +245,13 @@ def playerInTeam(request,team_id):
             league_id = str(Team.objects.get(pk = team_id))
       
             payload = json.loads(request.body)
-            player_name = payload['name']
-            player_age  = int(payload['age'])
-            player_position = payload['position']
+            try:
+                player_name = payload['name']
+                player_age  = int(payload['age'])
+                player_position = payload['position']
+                print(payload.len())
+            except:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             try:
                 payload['id']
                 return Response(status=status.HTTP_400_BAD_REQUEST)
