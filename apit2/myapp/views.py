@@ -275,7 +275,7 @@ def playerInTeam(request,team_id):
 
 
         except:
-            return Response(status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
             # team no existe
     
     
