@@ -73,9 +73,9 @@ def leagues(request): #Ver todas las ligas/ Agregar liga
             league = League(id = this_id, name=league_name, sport=league_sport, teams=league_teams, players=league_players, self_name=baseurl + '/leagues/' +  this_id)
             try:
                 league.save()
-                serializer = LeagueSerializer(league, many= False)
+                serializer = LeagueSerializer(League.objects.get(pk = this_id), many= False)
                 return Response(serializer.data,status=status.HTTP_201_CREATED)
-                #response = json.dumps([{ 'Success': 'League added successfully!'}])
+
             except:
                 response = json.dumps([{ 'Error': 'League could not be added!'}])
     
