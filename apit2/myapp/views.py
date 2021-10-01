@@ -190,9 +190,10 @@ def playersInLeague(request,league_id):
             League.objects.get(pk = league_id)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        players = Player.objects.filter(league_id = league_id)
+        league_link = "/leagues/" + league_id
+        players = Player.objects.filter(league = league_link)
         serializer = PlayerSerializer(players,many=True)
-        Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(serializer.data,status=status.HTTP_200_OK)
 
 
 #TEAMS
