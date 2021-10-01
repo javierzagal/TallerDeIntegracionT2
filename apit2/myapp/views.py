@@ -161,7 +161,7 @@ def teamInLeague(request,league_id):
             league= team_league, players=team_players,self_name= team_self)
         try:
             team.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(TeamSerializer(team,many=False).data,status=status.HTTP_201_CREATED)
         except:
             response = json.dumps([{ 'Error': 'Team could not be added!'}])
 
