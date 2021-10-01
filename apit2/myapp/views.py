@@ -237,8 +237,12 @@ def team(request,team_id):
 @api_view(['GET','POST','DELETE'])
 def playerInTeam(request,team_id):
     if request.method == 'POST':
+        try:
+            Team.objects.get(pk = team_id)
+        except:
+            return Response(status.HTTP_422_UNPROCESSABLE_ENTITY)
         try: 
-            league_id = str(Team.objects.get(id = team_id))
+            league_id = str(Team.objects.get(pk = team_id))
       
             payload = json.loads(request.body)
             player_name = payload['name']
