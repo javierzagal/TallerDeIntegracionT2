@@ -271,7 +271,8 @@ def playerInTeam(request,team_id):
             times_trained= 0, league=player_league, team=player_team, self_name=player_self)
             try:
                 existingplayer = Player.objects.get(pk = this_id)
-                return Response(PlayerSerializer(existingplayer, many= False),status=status.HTTP_409_CONFLICT)
+                serializer = PlayerSerializer(existingplayer, many= False)
+                return Response(serializer.data,status=status.HTTP_409_CONFLICT)
                 #jugador ya existe
             except:
                 player.save()
