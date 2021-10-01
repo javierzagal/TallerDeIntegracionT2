@@ -24,7 +24,8 @@ urlpatterns = [
     #CREAR
     path('leagues',views.leagues), #POST Y GET
     path('leagues/<str:league_id>', views.league),
-    path('leagues/<str:league_id>/teams',views.teamInLeague),#POST y GET
+    path('leagues/<str:league_id>/teams',views.teamInLeague),
+    path('leagues/<str:league_id>/players',views.playersInLeague),#POST y GET
     #path('teams/<str:team_id>/players',views.add_player),
     #OBTENER
     path('teams', views.teams), #retorna todos los equipos

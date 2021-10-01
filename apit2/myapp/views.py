@@ -7,11 +7,8 @@ import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
-
 from base64 import b64encode
-
 from rest_framework.views import exception_handler
-
 from myapp.models import Car, League, Team, Player
 from myapp.serializers import LeagueSerializer, TeamSerializer, PlayerSerializer
 
@@ -186,6 +183,16 @@ def teamInLeague(request,league_id):
 
 
     return HttpResponse(response, content_type='text/json')  
+@api_view(['GET'])
+def playersInLeague(request,league_id):
+    if request.method == 'GET':
+        try:
+            League.objects.get(pk = league_id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        players = Player.object.filter(league_id = league_id)
+        serializer = PlayerSerializer(players,many=True)
+        Response(serializer.data,status=status.HTTP_200_OK)
 
 
 #TEAMS
