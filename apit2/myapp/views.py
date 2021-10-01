@@ -264,7 +264,10 @@ def playerInTeam(request,team_id):
     
     elif request.method == 'GET':
         try:
-            #print(Player.objects.filter(team_id = team_id))
+            Team.objects.get(pk = team_id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        try:
             players = Player.objects.filter(team_id = team_id)
             serializer = PlayerSerializer(players, many=True)
             return Response(serializer.data)
