@@ -240,7 +240,7 @@ def playerInTeam(request,team_id):
         try:
             Team.objects.get(pk = team_id)
         except:
-            return Response(status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         try: 
             league_id = str(Team.objects.get(pk = team_id))
       
