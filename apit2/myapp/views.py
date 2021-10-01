@@ -288,7 +288,7 @@ def player(request,player_id):
     elif request.method == 'DELETE':
         try:
             deleteThisPlayer(player_id)
-            return HttpResponse(200)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except:
             #not found
             return HttpResponseNotFound()
