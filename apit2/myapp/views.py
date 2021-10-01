@@ -67,15 +67,17 @@ def leagues(request): #Ver todas las ligas/ Agregar liga
         id_team = b64encode(idstring.encode()).decode('utf-8')[0:22]
         this_id = id_team
         try:
-            League.objects.get(pk = id_team) 
-            return Response(status=status.HTTP_409_CONFLICT)
+            ligaExistente = League.objects.get(pk = id_team) 
+            serializer = LeagueSerializer(ligaExistente, many= False)
+            return Response(serializer.data,status=status.HTTP_409_CONFLICT)
         except:
             league_teams = baseurl + '/leagues/'+ this_id + '/teams'
             league_players = baseurl + '/leagues/'+ this_id + '/players'
             league = League(id = this_id, name=league_name, sport=league_sport, teams=league_teams, players=league_players, self_name=baseurl + '/leagues/' +  this_id)
             try:
                 league.save()
-                return Response(LeagueSerializer(league, many=False).data,status=status.HTTP_201_CREATED)
+                serializer = LeagueSerializer(league, many= False)
+                return Response(serializer.data,status=status.HTTP_201_CREATED)
                 #response = json.dumps([{ 'Success': 'League added successfully!'}])
             except:
                 response = json.dumps([{ 'Error': 'League could not be added!'}])
@@ -124,29 +126,39 @@ def teamInLeague(request,league_id):
     if request.method == 'POST':
         try: 
             League.objects.get(pk = league_id)
-            
-            payload = json.loads(request.body)
+        except:
+            return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY) #liga no existe
+
+        payload = json.loads(request.body)
+        try:
             team_name = payload['name']
             team_city  = payload['city']
-            idstring = team_name + ":" + team_city
-            id_team = b64encode(idstring.encode()).decode('utf-8')[0:22]
-            this_id = id_team
-
-
-            team_league = baseurl + '/leagues/'+ league_id
-            team_players = baseurl + '/teams/'+ this_id + '/players'
-            team_self = baseurl + '/teams/'+ this_id
-
-
-            team = Team(id= this_id, league_id= league_id, name=team_name, city=team_city,
-             league= team_league, players=team_players,self_name= team_self)
-            try:
-                team.save()
-                return Response(status=status.HTTP_201_CREATED)
-            except:
-                response = json.dumps([{ 'Error': 'Team could not be added!'}])
         except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_400_BAD_REQUEST) 
+        try:
+            payload["id"]
+            return Response(status=status.HTTP_400_BAD_REQUEST) 
+        except:
+            pass
+        
+        idstring = team_name + ":" + team_city
+        id_team = b64encode(idstring.encode()).decode('utf-8')[0:22]
+        this_id = id_team
+
+
+        team_league = baseurl + '/leagues/'+ league_id
+        team_players = baseurl + '/teams/'+ this_id + '/players'
+        team_self = baseurl + '/teams/'+ this_id
+
+
+        team = Team(id= this_id, league_id= league_id, name=team_name, city=team_city,
+            league= team_league, players=team_players,self_name= team_self)
+        try:
+            team.save()
+            return Response(status=status.HTTP_201_CREATED)
+        except:
+            response = json.dumps([{ 'Error': 'Team could not be added!'}])
+
     
     
     elif request.method == 'GET':
