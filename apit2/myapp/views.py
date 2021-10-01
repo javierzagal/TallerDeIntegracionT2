@@ -52,8 +52,11 @@ def add_car(request):
 def leagues(request): #Ver todas las ligas/ Agregar liga
     if request.method == 'POST':
         payload = json.loads(request.body)
-        league_name = payload['name']
-        league_sport = payload['sport']
+        try:
+            league_name = payload['name']
+            league_sport = payload['sport']
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         try:
             payload['id']
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -72,7 +75,7 @@ def leagues(request): #Ver todas las ligas/ Agregar liga
             league = League(id = this_id, name=league_name, sport=league_sport, teams=league_teams, players=league_players, self_name=baseurl + '/leagues/' +  this_id)
             try:
                 league.save()
-                return Response(status=status.HTTP_201_CREATED)
+                return Response(LeagueSerializer(league, many=False).data,status=status.HTTP_201_CREATED)
                 #response = json.dumps([{ 'Success': 'League added successfully!'}])
             except:
                 response = json.dumps([{ 'Error': 'League could not be added!'}])
