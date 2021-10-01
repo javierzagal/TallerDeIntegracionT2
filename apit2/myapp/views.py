@@ -118,7 +118,7 @@ def league(request, league_id):
         except:
             return HttpResponseNotFound()
 
-#leagues/id/teams
+#leagues/id/teams CREAR EQUIPO
 #Obtener todos los equipos de la liga (GET)/Crear un equipo (POST)
 @csrf_exempt
 @api_view(['GET','POST'])
@@ -144,7 +144,13 @@ def teamInLeague(request,league_id):
         idstring = team_name + ":" + team_city
         id_team = b64encode(idstring.encode()).decode('utf-8')[0:22]
         this_id = id_team
-
+        try:
+            teamExistente = Team.objects.get(pk = this_id)
+            serializer = TeamSerializer(teamExistente, many= False)
+            return Response(serializer.data, status=status.HTTP_409_CONFLICT)
+            # team ya existe
+        except:
+            pass
 
         team_league = baseurl + '/leagues/'+ league_id
         team_players = baseurl + '/teams/'+ this_id + '/players'
