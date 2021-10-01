@@ -106,14 +106,17 @@ def league(request, league_id):
     elif request.method == 'DELETE':
         try:
             league = League.objects.get(pk = league_id)
-            teams = Team.objects.filter(league_id = league_id)
-            for team in teams:
-                players = Player.objects.filter(team_id = team.id)
-                for player in players:
-                    deleteThisPlayer(player.id)
-                team.delete()
+            try:
+                teams = Team.objects.filter(league_id = league_id)
+                for team in teams:
+                    players = Player.objects.filter(team_id = team.id)
+                    for player in players:
+                        deleteThisPlayer(player.id)
+                    team.delete()
+            except:
+                pass
             league.delete()
-            return Response(status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         except:
             return HttpResponseNotFound()
