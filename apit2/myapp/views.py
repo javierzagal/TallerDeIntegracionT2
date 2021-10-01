@@ -54,6 +54,11 @@ def leagues(request): #Ver todas las ligas/ Agregar liga
         payload = json.loads(request.body)
         league_name = payload['name']
         league_sport = payload['sport']
+        try:
+            payload['id']
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except:
+            pass
         idstring = league_name + ":" + league_sport
 
         id_team = b64encode(idstring.encode()).decode('utf-8')[0:22]
