@@ -169,7 +169,13 @@ def teamInLeague(request,league_id):
     
     elif request.method == 'GET':
         try:
+            League.objects.get(pk = league_id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        try:
             teams = Team.objects.filter(league_id = league_id)
+            if teams == []:
+                return HttpResponseNotFound()
             serializer = TeamSerializer(teams, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
