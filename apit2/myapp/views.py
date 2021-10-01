@@ -206,17 +206,20 @@ def team(request,team_id):
             return HttpResponseNotFound()
     elif request.method == 'DELETE':
         try:
-            #primero borrar jugadores
-            playersInThisTeam = Player.objects.filter(team_id = team_id)
-            for player in playersInThisTeam:
-                deleteThisPlayer(player.id) 
-            #borrar este team
             team = Team.objects.get(pk = team_id)
+            #primero borrar jugadores
+            try:
+                playersInThisTeam = Player.objects.filter(team_id = team_id)
+                for player in playersInThisTeam:
+                    deleteThisPlayer(player.id) 
+            except:
+                pass
+            #borrar este team
             team.delete()
-            Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         except:
-            return HttpResponseNotFound()
+            return HttpResponseNotFound() #no se encontro el team
 
 #teams/id/players
 @csrf_exempt
