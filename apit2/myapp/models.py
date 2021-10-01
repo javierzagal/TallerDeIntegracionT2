@@ -35,7 +35,7 @@ class Team(models.Model):
 
     league = models.CharField(max_length = 100)
     players = models.CharField(max_length = 100)
-    self_name = models.CharField(max_length = 100)
+    self_name = models.CharField(db_column= 'self', max_length = 100)
     class Meta:
         verbose_name = 'Team'
         verbose_name_plural = 'Team'
@@ -48,13 +48,13 @@ class Player(models.Model):
     id = models.CharField(max_length = 100,primary_key=True)
     team_id = models.CharField(max_length = 100)
     name = models.CharField(max_length = 100)
-    age = models.IntegerField()
+    age = models.IntegerField(max_length = 100)
     position = models.CharField(max_length = 100)
-    times_trained = models.IntegerField()
+    times_trained = models.IntegerField(max_length = 100)
 
     league = models.CharField(max_length = 100)
     team = models.CharField(max_length = 100)
-    self_name = models.CharField(max_length = 100)
+    self_name = models.CharField(db_column= 'self', max_length = 100)
     class Meta:
         verbose_name = 'Player'
         verbose_name_plural = 'Player'

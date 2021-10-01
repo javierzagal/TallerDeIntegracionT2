@@ -16,4 +16,4 @@ class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = 'id','team_id','name','age','position','times_trained','league','team','self'
-TeamSerializer._declared_fields["self"] = serializers.CharField(source = "self_name")
+PlayerSerializer._declared_fields["self"] = serializers.CharField(source = "self_name")

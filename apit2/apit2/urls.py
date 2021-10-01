@@ -29,8 +29,14 @@ urlpatterns = [
     #OBTENER
     path('teams', views.teams), #retorna todos los equipos
     path('teams/<str:team_id>', views.team),
-    path('teams/<str:team_id>/players', views.playerInTeam)
-    #path('players'),
+    path('teams/<str:team_id>/players', views.playerInTeam),
+    path('players', views.players),
+    path('players/<str:player_id>', views.player),
+
+    #ENTRENAR
+    path('players/<str:player_id>/train', views.trainPlayer),
+    path('teams/<str:team_id>/train', views.trainTeam),
+    path('leagues/<str:league_id>/train', views.trainLeague),
     #path('leagues/<str:league_id>',views.get_league),
 
 ]

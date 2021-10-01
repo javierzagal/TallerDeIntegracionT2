@@ -1,13 +1,16 @@
 from django.http.response import Http404, HttpResponseNotFound
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, request
 from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework import status
 
 from base64 import b64encode
+
+from rest_framework.views import exception_handler
 
 from myapp.models import Car, League, Team, Player
 from myapp.serializers import LeagueSerializer, TeamSerializer, PlayerSerializer
@@ -52,25 +55,28 @@ def leagues(request): #Ver todas las ligas/ Agregar liga
         league_name = payload['name']
         league_sport = payload['sport']
         idstring = league_name + ":" + league_sport
+
         id_team = b64encode(idstring.encode()).decode('utf-8')[0:22]
         this_id = id_team
-
-        league_teams = baseurl + '/leagues/'+ this_id + '/teams'
-        league_players = baseurl + '/leagues/'+ this_id + '/players'
-        league = League(id = this_id, name=league_name, sport=league_sport, teams=league_teams, players=league_players, self_name=baseurl + '/leagues/' +  this_id)
         try:
-            league.save()
-            response = json.dumps([{ 'Success': 'League added successfully!'}])
+            League.objects.get(pk = id_team) 
+            return Response(status=status.HTTP_409_CONFLICT)
         except:
-            response = json.dumps([{ 'Error': 'League could not be added!'}])
+            league_teams = baseurl + '/leagues/'+ this_id + '/teams'
+            league_players = baseurl + '/leagues/'+ this_id + '/players'
+            league = League(id = this_id, name=league_name, sport=league_sport, teams=league_teams, players=league_players, self_name=baseurl + '/leagues/' +  this_id)
+            try:
+                league.save()
+                return Response(status=status.HTTP_201_CREATED)
+                #response = json.dumps([{ 'Success': 'League added successfully!'}])
+            except:
+                response = json.dumps([{ 'Error': 'League could not be added!'}])
     
     elif request.method == 'GET':
         try:
             leagues = League.objects.all()
             serializer = LeagueSerializer(leagues, many=True)
-            return Response(serializer.data)
-            #qs_json = serializers.serialize('json',leagues)
-            #response = qs_json
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         except:
             response = json.dumps([{ 'Error': 'No leagues'}])
@@ -78,17 +84,29 @@ def leagues(request): #Ver todas las ligas/ Agregar liga
 
 #leagues/id
 # Ver liga por su id (GET)
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 def league(request, league_id):
     if request.method == 'GET':
         try:
             league = League.objects.get(pk = league_id)
             serializer = LeagueSerializer(league, many=False)
-            return Response(serializer.data)
-            #response = json.dumps([{ 'id': league.name, 'name': league.sport, 'teams': league.teams, 'players': league.players, 'self': league.players}])
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except:
-            response = "liga no encontrada"
-    return HttpResponse(response, content_type='text/json')  
+            return Response(status=status.HTTP_404_NOT_FOUND)
+    elif request.method == 'DELETE':
+        try:
+            league = League.objects.get(pk = league_id)
+            teams = Team.objects.filter(league_id = league_id)
+            for team in teams:
+                players = Player.objects.filter(team_id = team.id)
+                for player in players:
+                    deleteThisPlayer(player.id)
+                team.delete()
+            league.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+
+        except:
+            return HttpResponseNotFound()
 
 #leagues/id/teams
 #Obtener todos los equipos de la liga (GET)/Crear un equipo (POST)
@@ -116,22 +134,19 @@ def teamInLeague(request,league_id):
              league= team_league, players=team_players,self_name= team_self)
             try:
                 team.save()
-                response = json.dumps([{ 'Success': 'Team added successfully!'}])
+                return Response(status=status.HTTP_201_CREATED)
             except:
                 response = json.dumps([{ 'Error': 'Team could not be added!'}])
         except:
-            response = json.dumps([{ 'Error': 'League does not exist!'}])
+            return Response(status=status.HTTP_404_NOT_FOUND)
     
     
     elif request.method == 'GET':
         try:
-            #League.objects.get(pk = league_id)
-
             teams = Team.objects.filter(league_id = league_id)
             serializer = TeamSerializer(teams, many=True)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except:
-            response = json.dumps([{ 'Error': 'League does not exist!'}])
             return HttpResponseNotFound()
 
 
@@ -140,24 +155,40 @@ def teamInLeague(request,league_id):
 
 #TEAMS
 #/teams
-def teams(request):
+@api_view(['GET'])
+def teams(request): #show all teams
     if request.method == 'GET':
-        response = serializers.serialize('json',Team.objects.all()) 
-    return HttpResponse(response, content_type='text/json')  
+        teams = Team.objects.all()
+        serializer = TeamSerializer(teams, many=True)
+        return Response(serializer.data)
 
 
+@api_view(['GET','DELETE'])
 def team(request,team_id):
     if request.method == 'GET':
         try:
             team = Team.objects.get(pk = team_id)
-            response = json.dumps([{ 'id': team_id, 'league_id': team.league_id, 'name': team.name, 'city': team.city, 'league': team.league, 'players': team.players, 'self': team.self}])
-            return HttpResponse(response, content_type='text/json')  
+            serializer = TeamSerializer(team, many=False)
+            return Response(serializer.data)
         except:
-            response = "404 equipo no encontrado"
+            return HttpResponseNotFound()
+    elif request.method == 'DELETE':
+        try:
+            #primero borrar jugadores
+            playersInThisTeam = Player.objects.filter(team_id = team_id)
+            for player in playersInThisTeam:
+                deleteThisPlayer(player.id) 
+            #borrar este team
+            team = Team.objects.get(pk = team_id)
+            team.delete()
+            Response(status=status.HTTP_204_NO_CONTENT)
+
+        except:
             return HttpResponseNotFound()
 
+#teams/id/players
 @csrf_exempt
-@api_view(['GET','POST'])
+@api_view(['GET','POST','DELETE'])
 def playerInTeam(request,team_id):
     if request.method == 'POST':
         try: 
@@ -178,29 +209,107 @@ def playerInTeam(request,team_id):
             player = Player(id= this_id, team_id= team_id, name=player_name, age= int(player_age), position= player_position, 
             times_trained= 0, league=player_league, team=player_team, self_name=player_self)
             try:
-                player.save()
-                response = json.dumps([{ 'Success': 'Player added successfully!'}])
+                Player.objects.get(pk = this_id)
+                return Response(status=status.HTTP_409_CONFLICT)
+                #jugador ya existe
             except:
-                response = json.dumps([{ 'Error': 'Player could not be added!'}])
-                #YA EXISTE EL JUGADOR
-                return HttpResponse(200)
+                player.save()
+                return Response(status=status.HTTP_201_CREATED)
+                #jugador creado
+
 
         except:
-            response = json.dumps([{ 'Error': 'Team does not exist!'}])
+            return Response(status.HTTP_422_UNPROCESSABLE_ENTITY)
+            # team no existe
     
     
     elif request.method == 'GET':
         try:
-            print("l")
-            print(Player.objects.filter(team_id = team_id))
+            #print(Player.objects.filter(team_id = team_id))
             players = Player.objects.filter(team_id = team_id)
             serializer = PlayerSerializer(players, many=True)
             return Response(serializer.data)
 
         except:
-            response = json.dumps([{ 'Error': 'League does not exist!'}])
+            return HttpResponseNotFound()
+#/players   
+@csrf_exempt
+@api_view(['GET'])
+def players(request):
+    if request.method == 'GET':
+        players = Player.objects.all()
+        serializer = PlayerSerializer(players, many=True)
+        return Response(serializer.data)
+        
+#/players/id
+@csrf_exempt
+@api_view(['GET','DELETE'])
+def player(request,player_id):
+    if request.method == 'GET':
+        try:
+            player = Player.objects.get(pk = player_id)
+            serializer = PlayerSerializer(player, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            #not found
+            return HttpResponseNotFound()
+    elif request.method == 'DELETE':
+        try:
+            deleteThisPlayer(player_id)
+            return HttpResponse(200)
+        except:
+            #not found
+            return HttpResponseNotFound()
+
+@csrf_exempt
+@api_view(['PUT'])
+def trainPlayer(request,player_id):
+    if request.method == 'PUT':
+        try:
+            trainThisPlayer(player_id)
+            return HttpResponse(200)
+        except:
+            #not found
+            return HttpResponseNotFound()
+
+@csrf_exempt
+@api_view(['PUT'])
+def trainTeam(request,team_id):
+    if request.method == 'PUT':
+        try:
+            trainThisTeam(team_id)
+            return HttpResponse(200)
+        except:
+            #not found
+            return HttpResponseNotFound()
+
+@csrf_exempt
+@api_view(['PUT'])
+def trainLeague(request,league_id):
+    if request.method == 'PUT':
+        try:
+            TeamsInThisLeague = Team.objects.filter(league_id = league_id)
+            for team in TeamsInThisLeague:
+                trainThisTeam(team.id)
+            return HttpResponse(200)
+        except:
+            #not found
             return HttpResponseNotFound()
 
 
-    return HttpResponse(response, content_type='text/json')  
+# Funciones para borrar efectos cascadas
 
+def deleteThisPlayer(id):
+    player = Player.objects.get(pk = id)
+    player.delete()
+
+
+def trainThisTeam(id):
+    playersInThisTeam = Player.objects.filter(team_id = id)
+    for player in playersInThisTeam:
+        trainThisPlayer(player.id)
+
+def trainThisPlayer(id):
+    player = Player.objects.get(pk = id)
+    player.times_trained += 1
+    player.save()
