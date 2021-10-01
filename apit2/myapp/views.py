@@ -249,7 +249,9 @@ def playerInTeam(request,team_id):
                 player_name = payload['name']
                 player_age  = int(payload['age'])
                 player_position = payload['position']
-                print(payload.len())
+                if len(payload) > 3:
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+
             except:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             try:
