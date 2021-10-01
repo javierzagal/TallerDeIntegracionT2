@@ -252,7 +252,8 @@ def playerInTeam(request,team_id):
                 #jugador ya existe
             except:
                 player.save()
-                return Response(status=status.HTTP_201_CREATED)
+                serializer = PlayerSerializer(player,many=False)
+                return Response(serializer.data,status=status.HTTP_201_CREATED)
                 #jugador creado
 
 
